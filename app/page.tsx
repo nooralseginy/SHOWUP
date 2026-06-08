@@ -19,23 +19,23 @@ export default function Home() {
   const [time, setTime] = useState<number>(30);
   const [experience, setExperience] = useState<Experience>("intermediate");
   const [equipment, setEquipment] = useState<Equipment>("full");
-  const [bodyweight, setBodyweight] = useState<number>(75);
+  const [bodyweight, setBodyweight] = useState<number>(165);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const p = loadPrefs();
-    setBodyweight(p.bodyweightKg);
+    setBodyweight(p.bodyweightLb);
     setLoaded(true);
   }, []);
 
   function start() {
-    savePrefs({ bodyweightKg: bodyweight, units: "kg" });
+    savePrefs({ bodyweightLb: bodyweight });
     const plan = generatePlan({
       focus,
       experience,
       equipment,
       totalMinutes: time,
-      bodyweightKg: bodyweight,
+      bodyweightLb: bodyweight,
     });
     savePlan(plan);
     router.push("/workout");
@@ -109,7 +109,7 @@ export default function Home() {
             onChange={(e) => setBodyweight(Number(e.target.value))}
             className="w-full bg-transparent text-2xl tabular-nums focus:outline-none"
           />
-          <span className="text-sm text-muted">kg</span>
+          <span className="text-sm text-muted">lb</span>
         </label>
       </Section>
 

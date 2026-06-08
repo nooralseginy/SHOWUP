@@ -6,7 +6,7 @@ const PREFS_KEY = "showup.prefs.v1";
 const PLAN_KEY = "showup.plan.v1";
 const HISTORY_KEY = "showup.history.v1";
 
-const DEFAULT_PREFS: Prefs = { bodyweightKg: 75, units: "kg" };
+const DEFAULT_PREFS: Prefs = { bodyweightLb: 165 };
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;

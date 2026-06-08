@@ -20,5 +20,6 @@ export function estimateKcal(plan: SessionPlan, actualMinutes?: number): number 
   const met = (base + avg) / 2;
   const minutes = actualMinutes ?? plan.totalMinutes;
   const hours = minutes / 60;
-  return Math.round(met * plan.bodyweightKg * hours);
+  const bodyweightKg = plan.bodyweightLb / 2.2046;
+  return Math.round(met * bodyweightKg * hours);
 }

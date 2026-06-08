@@ -42,7 +42,7 @@ export default function SummaryPage() {
         <Stat label="Calories" value={`${record.kcal}`} suffix="kcal" />
         <Stat label="Sets" value={`${totalSets}`} />
         <Stat label="Reps" value={`${totalReps}`} />
-        <Stat label="Volume" value={`${Math.round(totalVolume)}`} suffix="kg" />
+        <Stat label="Volume" value={`${Math.round(totalVolume)}`} suffix="lb" />
       </div>
 
       <div className="mt-6">
@@ -65,7 +65,7 @@ export default function SummaryPage() {
                 </div>
                 {completed.length > 0 && (
                   <div className="mt-1 text-sm text-muted tabular-nums">
-                    Best: {best.reps} × {p.exercise.weighted ? `${best.weight}kg` : "BW"}
+                    Best: {best.reps} × {p.exercise.weighted ? `${best.weight}lb` : "BW"}
                   </div>
                 )}
               </li>

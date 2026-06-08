@@ -48,9 +48,9 @@ export function generatePlan(opts: {
   experience: Experience;
   equipment: Equipment;
   totalMinutes: number;
-  bodyweightKg: number;
+  bodyweightLb: number;
 }): SessionPlan {
-  const { focus, experience, equipment, totalMinutes, bodyweightKg } = opts;
+  const { focus, experience, equipment, totalMinutes, bodyweightLb } = opts;
 
   const warmupSec = Math.max(120, Math.round(totalMinutes * 60 * 0.1));
   const cooldownSec = Math.max(90, Math.round(totalMinutes * 60 * 0.05));
@@ -112,7 +112,7 @@ export function generatePlan(opts: {
     totalMinutes,
     warmupSec,
     cooldownSec,
-    bodyweightKg,
+    bodyweightLb,
     exercises,
     createdAt: Date.now(),
   };

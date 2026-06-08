@@ -35,7 +35,7 @@ export default function SetLogger({ planned, logs, currentSet, onComplete }: Pro
           />
         </label>
         <label className="flex flex-col gap-1 text-xs text-muted">
-          Weight ({weighted ? "kg" : "—"})
+          Weight ({weighted ? "lb" : "—"})
           <input
             type="number"
             inputMode="decimal"

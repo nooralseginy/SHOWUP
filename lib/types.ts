@@ -57,7 +57,7 @@ export interface SessionPlan {
   totalMinutes: number;
   warmupSec: number;
   cooldownSec: number;
-  bodyweightKg: number;
+  bodyweightLb: number;
   exercises: PlannedExercise[];
   createdAt: number;
 }
@@ -72,6 +72,5 @@ export interface SessionRecord {
 }
 
 export interface Prefs {
-  bodyweightKg: number;
-  units: "kg" | "lb";
+  bodyweightLb: number;
 }
