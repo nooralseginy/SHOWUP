@@ -48,6 +48,8 @@ export interface SetLog {
   reps: number;
   weight: number;
   done: boolean;
+  /** Optional self-reported effort, 1–10. Older logs leave this unknown. */
+  rpe?: number;
 }
 
 export interface SessionPlan {
@@ -69,6 +71,23 @@ export interface SessionRecord {
   startedAt: number;
   endedAt: number;
   kcal: number;
+  endedEarly?: boolean;
+  activeMs?: number;
+}
+
+export interface ActiveSession {
+  id: string;
+  revision?: number;
+  plan: SessionPlan;
+  logs: SetLog[][];
+  startedAt: number;
+  phase: "warmup" | "working" | "cooldown";
+  exerciseIdx: number;
+  setIdx: number;
+  resting: boolean;
+  endedEarly?: boolean;
+  pausedAt?: number;
+  pausedMs?: number;
 }
 
 export interface Prefs {

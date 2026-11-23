@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS", "moduleResolution": "node", "noEmit": false,
+    "incremental": false, "rootDir": ".", "plugins": [], "target": "ES2022"
+  },
+  "include": ["lib/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}

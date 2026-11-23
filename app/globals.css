@@ -14,6 +14,13 @@ body {
   -webkit-touch-callout: none;
 }
 
+button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid #d8ff36;
+  outline-offset: 3px;
+}
+
+button { touch-action: manipulation; }
+
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

@@ -5,27 +5,35 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FOCUS_LABEL } from "@/lib/generator";
 import type { SessionRecord } from "@/lib/types";
+import { loadHistory } from "@/lib/storage";
+import { isRecord } from "@/lib/data";
+import { formatSet, topSet, previousPerformance } from "@/lib/performance";
+import { durationMs } from "@/lib/session";
 
 export default function SummaryPage() {
   const router = useRouter();
   const [record, setRecord] = useState<SessionRecord | null>(null);
+  const [history, setHistory] = useState<SessionRecord[]>([]);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("showup.summary");
-    if (!raw) {
-      router.replace("/");
-      return;
-    }
     try {
-      setRecord(JSON.parse(raw));
+      const records = loadHistory();
+      setHistory(records);
+      const id = new URLSearchParams(window.location.search).get("session");
+      const saved = id ? records.find(item => item.id === id) : undefined;
+      if (saved) { setRecord(saved); return; }
+      const raw = sessionStorage.getItem("showup.summary");
+      const parsed: unknown = raw ? JSON.parse(raw) : null;
+      if (isRecord(parsed)) setRecord(parsed);
+      else router.replace("/history");
     } catch {
-      router.replace("/");
+      router.replace("/history");
     }
   }, [router]);
 
   if (!record) return null;
 
-  const minutes = Math.round((record.endedAt - record.startedAt) / 60000);
+  const minutes = Math.floor(durationMs(record) / 60000);
   const totalSets = record.logs.flat().filter((l) => l.done).length;
   const totalReps = record.logs.flat().reduce((a, l) => a + (l.done ? l.reps : 0), 0);
   const totalVolume = record.logs.flat().reduce((a, l) => a + (l.done ? l.reps * l.weight : 0), 0);
@@ -35,11 +43,11 @@ export default function SummaryPage() {
       <div className="mb-4 text-xs uppercase tracking-[0.25em] text-muted">Done.</div>
       <h1 className="text-3xl font-bold leading-tight">
         {FOCUS_LABEL[record.plan.focus]}
-        <br />in {minutes} min.
+        <br />{minutes < 1 ? "in under 1 min." : `in ${minutes} min.`}
       </h1>
 
       <div className="mt-6 grid grid-cols-2 gap-3">
-        <Stat label="Calories" value={`${record.kcal}`} suffix="kcal" />
+        <Stat label="Est. calories" value={`${record.kcal}`} suffix="kcal" />
         <Stat label="Sets" value={`${totalSets}`} />
         <Stat label="Reps" value={`${totalReps}`} />
         <Stat label="Volume" value={`${Math.round(totalVolume)}`} suffix="kg" />
@@ -51,10 +59,8 @@ export default function SummaryPage() {
           {record.plan.exercises.map((p, i) => {
             const sets = record.logs[i] ?? [];
             const completed = sets.filter((s) => s.done);
-            const best = completed.reduce(
-              (acc, s) => (s.weight * s.reps > acc.weight * acc.reps ? s : acc),
-              { reps: 0, weight: 0, done: false },
-            );
+            const best = topSet(completed, p.exercise.weighted);
+            const previous = previousPerformance(history, p.exercise, record.startedAt, record.id);
             return (
               <li key={p.exercise.id + i} className="rounded-2xl border border-line bg-panel p-4">
                 <div className="flex justify-between">
@@ -63,11 +69,13 @@ export default function SummaryPage() {
                     {completed.length}/{p.sets}
                   </div>
                 </div>
-                {completed.length > 0 && (
+                {best && (
                   <div className="mt-1 text-sm text-muted tabular-nums">
-                    Best: {best.reps} × {p.exercise.weighted ? `${best.weight}kg` : "BW"}
+                    Top logged set: {formatSet(best, p.exercise)}
                   </div>
                 )}
+                {previous && <p className="mt-1 text-xs text-muted">Last time: {formatSet(previous.top, p.exercise)}</p>}
+                {completed.length > 0 && <details className="mt-2 text-xs text-muted"><summary className="cursor-pointer">All logged sets</summary><ol className="mt-2 space-y-1">{completed.map((log, index) => <li key={index}>Set {index + 1}: {formatSet(log, p.exercise)}</li>)}</ol></details>}
               </li>
             );
           })}

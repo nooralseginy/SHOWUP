@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Pill from "@/components/Pill";
 import { generatePlan, FOCUS_LABEL, EXPERIENCE_LABEL, EQUIPMENT_LABEL } from "@/lib/generator";
-import { loadPrefs, savePlan, savePrefs } from "@/lib/storage";
-import type { Equipment, Experience, Focus } from "@/lib/types";
+import { loadData, beginWorkout } from "@/lib/storage";
+import type { ActiveSession, Equipment, Experience, Focus } from "@/lib/types";
 
 const FOCUS_OPTIONS: Focus[] = ["push", "pull", "legs", "upper", "lower", "full", "core", "conditioning"];
 const TIME_OPTIONS = [15, 30, 45, 60];
@@ -21,15 +21,18 @@ export default function Home() {
   const [equipment, setEquipment] = useState<Equipment>("full");
   const [bodyweight, setBodyweight] = useState<number>(75);
   const [loaded, setLoaded] = useState(false);
+  const [active, setActive] = useState<ActiveSession | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const p = loadPrefs();
-    setBodyweight(p.bodyweightKg);
+    try { const data = loadData(); setBodyweight(data.prefs.bodyweightKg); setActive(data.active); }
+    catch (e) { setError((e as Error).message); }
     setLoaded(true);
   }, []);
 
   function start() {
-    savePrefs({ bodyweightKg: bodyweight, units: "kg" });
+    try {
+    if (!Number.isFinite(bodyweight) || bodyweight <= 0 || bodyweight > 10000) throw new Error("Enter a valid bodyweight to start.");
     const plan = generatePlan({
       focus,
       experience,
@@ -37,8 +40,9 @@ export default function Home() {
       totalMinutes: time,
       bodyweightKg: bodyweight,
     });
-    savePlan(plan);
+    beginWorkout(plan, { bodyweightKg: bodyweight, units: "kg" });
     router.push("/workout");
+    } catch (e) { setError((e as Error).message); }
   }
 
   function randomize() {
@@ -59,6 +63,13 @@ export default function Home() {
           History
         </Link>
       </div>
+
+      {active && <div className="mb-5 rounded-2xl border border-accent/40 bg-panel p-4">
+        <p className="text-sm">{FOCUS_LABEL[active.plan.focus]} workout in progress · {active.logs.flat().filter(log => log.done).length} sets logged</p>
+        <Link href="/workout" className="mt-2 inline-flex min-h-11 items-center text-sm text-accent">Resume workout</Link>
+        <p className="text-xs text-muted">Starting a new session saves these logged sets to History.</p>
+      </div>}
+      {error && <p role="alert" className="mb-4 rounded-xl border border-red-400/40 p-3 text-sm text-red-300">{error}</p>}
 
       <Section title="Focus">
         <div className="grid grid-cols-2 gap-2">
@@ -105,6 +116,10 @@ export default function Home() {
           <input
             type="number"
             inputMode="decimal"
+            min={1}
+            max={10000}
+            step="any"
+            aria-label="Bodyweight in kilograms"
             value={bodyweight}
             onChange={(e) => setBodyweight(Number(e.target.value))}
             className="w-full bg-transparent text-2xl tabular-nums focus:outline-none"
@@ -126,7 +141,7 @@ export default function Home() {
             onClick={start}
             className="flex-1 rounded-2xl bg-accent py-4 text-base font-bold text-bg active:scale-[0.99]"
           >
-            Show up →
+            {active ? "Save current & start new" : "Show up"}
           </button>
         </div>
       </div>

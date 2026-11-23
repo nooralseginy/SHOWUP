@@ -38,19 +38,22 @@ export default function RestTimer({ seconds, onDone }: Props) {
       setRemaining((r) => {
         if (r <= 1) {
           clearInterval(id);
-          if (!firedRef.current) {
-            firedRef.current = true;
-            if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([180, 80, 180]);
-            chime();
-            onDone();
-          }
           return 0;
         }
         return r - 1;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [onDone]);
+  }, []);
+
+  useEffect(() => {
+    if (remaining === 0 && !firedRef.current) {
+      firedRef.current = true;
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([180, 80, 180]);
+      chime();
+      onDone();
+    }
+  }, [remaining, onDone]);
 
   const m = Math.floor(remaining / 60);
   const s = remaining % 60;

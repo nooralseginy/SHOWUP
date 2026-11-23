@@ -14,6 +14,7 @@ export default function Pill<T extends string>({ value, selected, onSelect, chil
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={() => onSelect(value)}
       className={[
         "rounded-2xl border px-4 py-3 text-sm font-medium transition-colors min-h-[48px]",

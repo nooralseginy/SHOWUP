@@ -4,76 +4,46 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FOCUS_LABEL } from "@/lib/generator";
 import { clearHistory, loadHistory } from "@/lib/storage";
+import { formatSet } from "@/lib/performance";
+import { durationMs } from "@/lib/session";
+import BackupControls from "@/components/BackupControls";
+import ExerciseTrends from "@/components/ExerciseTrends";
 import type { SessionRecord } from "@/lib/types";
-
-function formatDate(ms: number) {
-  const d = new Date(ms);
-  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-}
 
 export default function HistoryPage() {
   const [records, setRecords] = useState<SessionRecord[]>([]);
+  const [error, setError] = useState("");
+  function refresh() { try { setRecords(loadHistory()); setError(""); } catch (e) { setError((e as Error).message); } }
+  useEffect(() => { refresh(); window.addEventListener("storage", refresh); return () => window.removeEventListener("storage", refresh); }, []);
+  const week = records.filter(record => record.endedAt <= Date.now() && record.endedAt > Date.now() - 7 * 86400000);
 
-  useEffect(() => {
-    setRecords(loadHistory());
-  }, []);
-
-  const weekKcal = records
-    .filter((r) => r.endedAt > Date.now() - 7 * 24 * 60 * 60 * 1000)
-    .reduce((a, r) => a + r.kcal, 0);
-
-  return (
-    <main>
-      <div className="mb-4 flex items-center justify-between">
-        <Link href="/" className="text-xs text-muted">
-          ← Back
-        </Link>
-        {records.length > 0 && (
-          <button
-            onClick={() => {
-              if (confirm("Clear all history?")) {
-                clearHistory();
-                setRecords([]);
-              }
-            }}
-            className="text-xs text-muted"
-          >
-            Clear
-          </button>
-        )}
-      </div>
-
-      <h1 className="text-3xl font-bold leading-tight">History</h1>
-      <div className="mt-2 text-sm text-muted">
-        Last 7 days: <span className="text-white tabular-nums">{weekKcal} kcal</span> ·{" "}
-        <span className="text-white tabular-nums">
-          {records.filter((r) => r.endedAt > Date.now() - 7 * 24 * 60 * 60 * 1000).length}
-        </span>{" "}
-        sessions
-      </div>
-
-      <ul className="mt-6 space-y-2">
-        {records.length === 0 && (
-          <li className="rounded-2xl border border-dashed border-line bg-panel px-4 py-10 text-center text-sm text-muted">
-            No sessions yet. Show up.
-          </li>
-        )}
-        {records.map((r) => {
-          const minutes = Math.round((r.endedAt - r.startedAt) / 60000);
-          const sets = r.logs.flat().filter((l) => l.done).length;
-          return (
-            <li key={r.id} className="rounded-2xl border border-line bg-panel p-4">
-              <div className="flex items-baseline justify-between">
-                <div className="text-lg font-semibold">{FOCUS_LABEL[r.plan.focus]}</div>
-                <div className="text-xs text-muted">{formatDate(r.endedAt)}</div>
-              </div>
-              <div className="mt-1 text-sm text-muted tabular-nums">
-                {minutes}m · {sets} sets · {r.kcal} kcal
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </main>
-  );
+  return <main>
+    <div className="mb-4 flex items-center justify-between">
+      <Link href="/" className="inline-flex min-h-11 items-center text-xs text-muted">← Back</Link>
+      {records.length > 0 && <button className="min-h-11 text-xs text-muted" onClick={() => {
+        if (confirm("Clear saved workout history on this device? Export a backup first if you want to keep it.")) {
+          try { clearHistory(); refresh(); } catch (e) { setError((e as Error).message); }
+        }
+      }}>Clear history</button>}
+    </div>
+    <h1 className="text-3xl font-bold">History</h1>
+    <p className="mt-2 text-sm text-muted">Last 7 days: <span className="text-white">{week.length} {week.length === 1 ? "session" : "sessions"}</span> · {week.reduce((sum, r) => sum + r.kcal, 0)} estimated kcal</p>
+    {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
+    <ExerciseTrends records={records} />
+    <BackupControls onRestore={refresh} />
+    <h2 className="mt-7 text-xs uppercase tracking-widest text-muted">Sessions</h2>
+    {records.length === 0 && !error && <p className="mt-3 rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-center text-sm text-muted">No sessions yet. Your logged sets will appear here.</p>}
+    <ul className="mt-3 space-y-2">{records.map(record => <li key={record.id}>
+      <details className="rounded-2xl border border-line bg-panel p-4">
+        <summary className="cursor-pointer">
+          <span className="font-semibold">{FOCUS_LABEL[record.plan.focus]}</span><span className="ml-2 text-xs text-muted">{new Date(record.endedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+          <span className="mt-1 block text-sm text-muted">{durationMs(record) < 60000 ? "<1m" : `${Math.floor(durationMs(record) / 60000)}m`} · {record.logs.flat().filter(log => log.done).length} {record.logs.flat().filter(log => log.done).length === 1 ? "set" : "sets"}{record.endedEarly ? " · shortened" : ""}</span>
+        </summary>
+        <ul className="mt-4 space-y-3">{record.plan.exercises.map((planned, i) => <li key={`${planned.exercise.id}-${i}`}>
+          <p className="text-sm font-medium">{planned.exercise.name}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted">{(record.logs[i] ?? []).filter(log => log.done).map(log => formatSet(log, planned.exercise)).join(" / ") || "No sets logged"}</p>
+        </li>)}</ul>
+      </details>
+    </li>)}</ul>
+  </main>;
 }

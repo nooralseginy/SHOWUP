@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SHOWUP — Random Gym Workout",
+  title: "SHOWUP — Workout planner",
   description: "Show up. Pick focus, time, level. Get a workout. Log it. Done.",
   manifest: "/manifest.json",
   icons: { icon: "/icon.svg" },
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   viewportFit: "cover",
   themeColor: "#0a0a0b",
 };

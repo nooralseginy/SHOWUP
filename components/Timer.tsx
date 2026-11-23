@@ -31,17 +31,20 @@ export default function Timer({ seconds, onComplete, autoStart = true, label }: 
       setRemaining((r) => {
         if (r <= 1) {
           clearInterval(id);
-          if (!completedRef.current) {
-            completedRef.current = true;
-            onComplete?.();
-          }
           return 0;
         }
         return r - 1;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [running, onComplete]);
+  }, [running]);
+
+  useEffect(() => {
+    if (remaining === 0 && !completedRef.current) {
+      completedRef.current = true;
+      onComplete?.();
+    }
+  }, [remaining, onComplete]);
 
   const pct = seconds > 0 ? (1 - remaining / seconds) * 100 : 0;
 
