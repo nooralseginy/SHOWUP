@@ -45,7 +45,7 @@ No environment variables. No backend. Everything lives in `localStorage`.
 
 Next.js 14 (App Router) · TypeScript · Tailwind · client-only · `localStorage`.
 
-## Ideas worth noting (not built — your call which to ship next)
+## Possible future work
 
 - Progressive overload suggestions based on last session's weights
 - RPE (rate of perceived exertion) per set
